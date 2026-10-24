@@ -1,0 +1,17 @@
+# Never commit credentials or exercise material
+erwan-bernard-aws.txt
+*.pdf
+filedrop.zip
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+
+# Local runtime
+filedrop/data/*
+.venv/
+__pycache__/
