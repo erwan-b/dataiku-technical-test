@@ -1,0 +1,33 @@
+# Local stack: the same image as in Kubernetes, with PostgreSQL next to it.
+#   docker compose up --build -d && ./scripts/smoke-test.sh http://localhost:8080
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: filedrop
+      POSTGRES_PASSWORD: filedrop
+      POSTGRES_DB: filedrop
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U filedrop -d filedrop"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  app:
+    build: .
+    image: filedrop:local
+    environment:
+      DATABASE_URL: postgresql://filedrop:filedrop@db:5432/filedrop
+    ports:
+      - "8080:8080"
+    volumes:
+      - files:/data
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-data:
+  files:
