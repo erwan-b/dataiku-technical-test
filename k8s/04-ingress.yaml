@@ -1,0 +1,43 @@
+---
+# Public ALB provisioned by EKS Auto Mode. No authentication by design (out of
+# scope); restrict inboundCIDRs to limit who can reach it.
+apiVersion: eks.amazonaws.com/v1
+kind: IngressClassParams
+metadata:
+  name: alb
+spec:
+  scheme: internet-facing # Auto Mode ALBs are internal by default
+  targetType: ip
+  inboundCIDRs:
+    - 0.0.0.0/0
+---
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: alb
+spec:
+  controller: eks.amazonaws.com/alb
+  parameters:
+    apiGroup: eks.amazonaws.com
+    kind: IngressClassParams
+    name: alb
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: filedrop
+  namespace: filedrop
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /healthz
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: filedrop
+                port:
+                  name: http

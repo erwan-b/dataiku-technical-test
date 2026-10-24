@@ -1,0 +1,85 @@
+---
+# StatefulSet: the EBS volume (DATA_DIR) is created from volumeClaimTemplates
+# and stays bound to pod filedrop-0 across restarts and rollouts. EBS is
+# ReadWriteOnce and bound to one AZ, hence a single replica. A rollout deletes
+# the pod before recreating it, so the volume is never attached twice (short
+# downtime on each rollout, accepted).
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: filedrop
+  namespace: filedrop
+spec:
+  replicas: 1
+  serviceName: filedrop
+  selector:
+    matchLabels:
+      app: filedrop
+  # Keep the data if the StatefulSet itself is deleted; deleting the namespace
+  # (scripts/deploy.sh delete) removes the claim and the EBS volume.
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  template:
+    metadata:
+      labels:
+        app: filedrop
+    spec:
+      nodeSelector:
+        kubernetes.io/arch: amd64 # the image is built for linux/amd64 only
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001 # makes the EBS volume writable by the app user
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: filedrop
+          # Replaced by scripts/deploy.sh with <ecr-repository-url>:<release-tag>.
+          image: IMAGE_PLACEHOLDER
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: filedrop-db
+                  key: DATABASE_URL
+            - name: DATA_DIR
+              value: /data
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: ebs-gp3
+        resources:
+          requests:
+            storage: 10Gi

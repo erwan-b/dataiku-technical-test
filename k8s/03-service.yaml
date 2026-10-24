@@ -1,0 +1,15 @@
+---
+# Internal only: traffic comes from the ALB created by the Ingress (04-ingress.yaml).
+apiVersion: v1
+kind: Service
+metadata:
+  name: filedrop
+  namespace: filedrop
+spec:
+  type: ClusterIP
+  selector:
+    app: filedrop
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

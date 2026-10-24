@@ -1,5 +1,5 @@
 # Local stack: the same image as in Kubernetes, with PostgreSQL next to it.
-#   docker compose up --build -d && ./scripts/smoke-test.sh http://localhost:8080
+#   docker compose up --build -d   ->   http://localhost:8080
 services:
   db:
     image: postgres:18
