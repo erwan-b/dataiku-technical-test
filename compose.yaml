@@ -2,13 +2,13 @@
 #   docker compose up --build -d && ./scripts/smoke-test.sh http://localhost:8080
 services:
   db:
-    image: postgres:17
+    image: postgres:18
     environment:
       POSTGRES_USER: filedrop
       POSTGRES_PASSWORD: filedrop
       POSTGRES_DB: filedrop
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql # postgres 18+ keeps PGDATA in a versioned subdirectory
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U filedrop -d filedrop"]
       interval: 2s
