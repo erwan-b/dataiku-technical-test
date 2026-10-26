@@ -3,7 +3,6 @@ module "ecr" {
   version = "3.2.0"
 
   repository_name = var.name
-  # Release tags are immutable: a version always points to the same image.
   repository_image_tag_mutability = "IMMUTABLE"
   repository_image_scan_on_push   = true
   repository_force_delete         = true

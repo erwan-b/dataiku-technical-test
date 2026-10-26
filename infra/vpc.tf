@@ -6,8 +6,6 @@ module "vpc" {
   cidr = var.vpc_cidr
   azs  = local.azs
 
-  # /20 for nodes and pods (Auto Mode reserves /28 prefixes per node), small
-  # public subnets for the NLB and NAT, dedicated subnets for RDS.
   private_subnets  = [for i in range(3) : cidrsubnet(var.vpc_cidr, 4, i)]
   public_subnets   = [for i in range(3) : cidrsubnet(var.vpc_cidr, 8, 48 + i)]
   database_subnets = [for i in range(3) : cidrsubnet(var.vpc_cidr, 8, 52 + i)]
